@@ -1,0 +1,10 @@
+obj/
+lib/
+
+*.o
+*.a
+
+.vscode/
+
+tcpip_server
+
