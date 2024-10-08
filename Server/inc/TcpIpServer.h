@@ -1,8 +1,6 @@
 #ifndef SERVER_INC_TCP_IP_SERVER_H
 #define SERVER_INC_TCP_IP_SERVER_H
 
-#include "../../Sockets/inc/BaseSocket.h"
-
 namespace Server
 {
     class TcpIpServer
@@ -11,7 +9,6 @@ namespace Server
         void print();
 
         private:
-        Sockets::BaseSocket bs;
     };
 } // Server
 

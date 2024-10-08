@@ -9,6 +9,11 @@ namespace Sockets
     {
         public:
         void print();
+
+        int establish_connection() override
+        {
+            // TODO
+        }
     };
 }
 
