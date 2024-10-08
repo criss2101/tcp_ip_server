@@ -1,8 +1,14 @@
 #include "../inc/tcp_ip_server.h"
+#include "tcp_ip_server.h"
 
 namespace Server
 {
-    void TcpIpServer::print()
+    void TcpIpServer::LaunchServer()
     {
     }
-} // Server
+
+    void TcpIpServer::ShutdownServer()
+    {
+    }
+
+} // namespace Server
