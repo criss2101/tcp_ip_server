@@ -12,7 +12,7 @@ all: $(LIB_SOCKETS) $(LIB_SERVER) $(TARGET)
 # Rule to build the main executable
 $(TARGET): main.cpp
 	@echo "Building executable $(TARGET)..."
-	$(CXX) $(CXXFLAGS) main.cpp -o $(TARGET) -L./Server/lib -lserver
+	$(CXX) $(CXXFLAGS) main.cpp -o $(TARGET) -L./Server/lib -lserver -L./Sockets/lib -lsockets
 
 # Rule to build libsockets
 $(LIB_SOCKETS):
