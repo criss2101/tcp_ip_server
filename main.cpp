@@ -2,9 +2,7 @@
 
 int main()
 {
-    Server::TcpIpServer server;
 
-    server.print();
-    
+
     return 0;
 }
