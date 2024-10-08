@@ -37,12 +37,15 @@ namespace Server
     {
         public:
         explicit TcpIpServer(Config::TcpIpServerConfig config);
+        ~TcpIpServer();
 
         void LaunchServer() override;
         void ShutdownServer() override;
         bool IsRunning() const override { return is_running_; };
 
         private:
+        void Work();
+        
         bool is_running_{false};
         std::unique_ptr<Sockets::Interface::IListeningSocket> listening_socket_;
      };

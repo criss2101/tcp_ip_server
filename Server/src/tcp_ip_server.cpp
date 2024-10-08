@@ -9,17 +9,29 @@ namespace Server
         listening_socket_ = std::make_unique<Sockets::ListeningSocket>(config.socket_domain, config.socket_type, config.socket_protocol, config.ip_adress, config.socket_port);
     }
 
+    TcpIpServer::~TcpIpServer()
+    {
+        ShutdownServer();
+    }
+
     void TcpIpServer::LaunchServer()
     {
         listening_socket_->Init();
         listening_socket_->StartListening();
         is_running_ = true;
+
+        Work();
     }
 
     void TcpIpServer::ShutdownServer()
     {
         listening_socket_->Close();
         is_running_ = false;
+    }
+
+    void TcpIpServer::Work()
+    {
+ 
     }
 
 } // namespace Server

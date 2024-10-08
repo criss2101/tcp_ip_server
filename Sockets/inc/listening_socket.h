@@ -6,7 +6,7 @@
 
 namespace Sockets
 {
-    class ListeningSocket final : public BaseSocket, Interface::IListeningSocket
+    class ListeningSocket final : public BaseSocket, public Interface::IListeningSocket
     {
         public:
         explicit ListeningSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port);
