@@ -13,6 +13,6 @@ namespace Sockets
             return connect(socket_fd_, reinterpret_cast<const sockaddr*>(&address_), sizeof(address_));
         }
     };
-}
+} // namespace Sockets
 
 #endif // SOCKETS_INC_CLIENT_SOCKET_H

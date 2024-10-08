@@ -22,6 +22,6 @@ namespace Sockets
         
         const int max_connections_{10};
     };
-}
+} // namespace Sockets
 
 #endif // SOCKETS_INC_LISTENING_SOCKET_H

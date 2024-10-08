@@ -34,4 +34,4 @@ namespace Sockets
     {
         BaseSocket::Close();
     }
-}
+} // namespace Sockets

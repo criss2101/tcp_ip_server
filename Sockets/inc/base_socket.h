@@ -31,6 +31,6 @@ namespace Sockets
         const std::string ip_address_;
         const uint16_t port_;
     };
-}
+} // namespace Sockets
 
 #endif // SOCKETS_INC_BASE_SOCKET_H

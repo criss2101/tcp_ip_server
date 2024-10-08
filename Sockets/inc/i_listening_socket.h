@@ -16,7 +16,7 @@ namespace Sockets
             virtual void Close() = 0;
             virtual bool IsOpen() const = 0;   
         };
-    } // Interface
-} // Sockets
+    } // namespace Interface
+} // namespace Sockets
 
 #endif // SOCKETS_INC_I_LISTENING_SOCKET_H

@@ -47,5 +47,5 @@ namespace Sockets
         close(socket_fd_);
         is_open = false;
     }
-}
+} // namespace Sockets
 
