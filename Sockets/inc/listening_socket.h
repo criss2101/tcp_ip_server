@@ -7,15 +7,8 @@ namespace Sockets
 {
     class ListeningSocket : public Sockets::BaseSocket
     {
-        public:
-        void print();
-
-        int establish_connection() override
-        {
-            // TODO
-
-            return 0;
-        }
+        private:
+        int EstablishConnection() override;
     };
 }
 

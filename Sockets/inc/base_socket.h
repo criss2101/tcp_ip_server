@@ -15,7 +15,7 @@ namespace Sockets
 
         protected:
         void Init();
-        virtual int establish_connection() = 0;
+        virtual int EstablishConnection() = 0;
 
         sockaddr_in address_;
         int socket_fd_;

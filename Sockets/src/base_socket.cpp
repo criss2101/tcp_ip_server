@@ -19,9 +19,9 @@ namespace Sockets
             exit(EXIT_FAILURE);
         }
 
-        if (establish_connection() < 0)
+        if (EstablishConnection() < 0)
         {
-            perror("establish_connection failure");
+            perror("EstablishConnection failure");
             exit(EXIT_FAILURE);
         }
     }
