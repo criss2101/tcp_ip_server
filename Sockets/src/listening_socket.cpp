@@ -3,8 +3,8 @@
 
 namespace Sockets
 {
-    ListeningSocket::ListeningSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port) :
-        BaseSocket(domain, type, protocol, std::move(ip_adress), port)
+    ListeningSocket::ListeningSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port, const int max_connections) :
+        BaseSocket(domain, type, protocol, std::move(ip_adress), port), max_connections_{max_connections}
     {}
 
     int ListeningSocket::EstablishConnection()

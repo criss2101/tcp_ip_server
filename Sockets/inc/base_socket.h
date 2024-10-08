@@ -19,7 +19,7 @@ namespace Sockets
 
         void Init();
         void Close();
-    
+
         sockaddr_in address_;
         int socket_fd_{-1};
         bool is_open{false};

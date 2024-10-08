@@ -5,7 +5,7 @@
 
 namespace Sockets
 {
-    explicit BaseSocket::BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port) :
+    BaseSocket::BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port) :
         domain_{domain}, type_{type}, protocol_{protocol}, ip_address_{std::move(ip_adress)}, port_{port}
         {}
 

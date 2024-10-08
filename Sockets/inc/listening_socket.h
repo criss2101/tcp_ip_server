@@ -9,7 +9,7 @@ namespace Sockets
     class ListeningSocket final : public BaseSocket, public Interface::IListeningSocket
     {
         public:
-        explicit ListeningSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port);
+        explicit ListeningSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port, const int max_connections);
 
         private:
         int EstablishConnection() override;
