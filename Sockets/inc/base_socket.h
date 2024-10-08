@@ -25,8 +25,8 @@ namespace Sockets
         const int domain_;
         const int type_;
         const int protocol_;
-        const uint16_t port_;
         const std::string ip_address_;
+        const uint16_t port_;
 
         int socket_handler_;
         int connection_;

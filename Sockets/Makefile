@@ -5,8 +5,8 @@ CXXFLAGS = -Wall -std=c++17 -I./inc
 LIB_FULL_NAME = lib/libsockets.a
 SRC_DIR = src
 OBJ_DIR = obj
-SRCS = $(SRC_DIR)/ListeningSocket.cpp
-OBJS = $(OBJ_DIR)/ListeningSocket.o
+SRCS = $(SRC_DIR)/listening_socket.cpp
+OBJS = $(OBJ_DIR)/listening_socket.o
 
 # Build target for the static library
 all: $(LIB_FULL_NAME)

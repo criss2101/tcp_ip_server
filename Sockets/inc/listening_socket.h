@@ -1,7 +1,7 @@
 #ifndef SOCKETS_INC_LISTENING_SOCKET_H
 #define SOCKETS_INC_LISTENING_SOCKET_H
 
-#include "BaseSocket.h"
+#include "base_socket.h"
 
 namespace Sockets
 {
@@ -13,6 +13,8 @@ namespace Sockets
         int establish_connection() override
         {
             // TODO
+
+            return 0;
         }
     };
 }
