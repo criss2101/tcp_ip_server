@@ -13,19 +13,16 @@ namespace Sockets
             exit(EXIT_FAILURE);
         }
 
-        if ((socket_handler_ = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+        if ((socket_fd_ = socket(AF_INET, SOCK_STREAM, 0)) < 0)
         {
             perror("socket failure");
             exit(EXIT_FAILURE);
         }
 
-        if ((connection_ = establish_connection()) == 0)
+        if (establish_connection() < 0)
         {
             perror("establish_connection failure");
             exit(EXIT_FAILURE);
         }
-
-
-        
     }
 }
