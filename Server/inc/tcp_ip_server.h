@@ -45,9 +45,10 @@ namespace Server
 
         private:
         void Work();
-        
+
         bool is_running_{false};
         std::unique_ptr<Sockets::Interface::IListeningSocket> listening_socket_;
+        const int max_events_{10};
      };
 
 } // namespace Server

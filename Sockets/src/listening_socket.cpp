@@ -1,4 +1,4 @@
-#include "listening_socket.h"
+#include "../inc/listening_socket.h"
 #include <sys/socket.h>
 
 namespace Sockets
@@ -22,7 +22,7 @@ namespace Sockets
         if (listen(socket_fd_, max_connections_) < 0)
         {
             BaseSocket::ExitWithError("StartingListening failue");
-        } 
+        }
     }
 
     int ListeningSocket::Accept()

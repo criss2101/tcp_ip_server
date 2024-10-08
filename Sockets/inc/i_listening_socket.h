@@ -14,7 +14,8 @@ namespace Sockets
             virtual void StartListening() = 0;
             virtual int Accept() = 0;
             virtual void Close() = 0;
-            virtual bool IsOpen() const = 0;   
+            virtual bool IsOpen() const = 0;
+            virtual int GetSocketFd() const = 0;
         };
     } // namespace Interface
 } // namespace Sockets

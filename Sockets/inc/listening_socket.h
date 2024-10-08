@@ -18,8 +18,10 @@ namespace Sockets
         void StartListening() override;
         int Accept() override;
         void Close() override;
-        bool IsOpen() const override {return is_open; }
-        
+        bool IsOpen() const override { return is_open; }
+        int GetSocketFd() const override { return socket_fd_; }
+
+
         const int max_connections_{10};
     };
 } // namespace Sockets

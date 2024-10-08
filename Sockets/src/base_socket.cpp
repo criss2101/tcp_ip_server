@@ -1,15 +1,15 @@
-#include "../inc/base_socket.h"
 #include <arpa/inet.h>
-#include "base_socket.h"
 #include <unistd.h>
+
+#include "../inc/base_socket.h"
 
 namespace Sockets
 {
-    explicit BaseSocket::BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port) : 
-        domain_{domain}, type_{type}, protocol_{protocol}, ip_address_{std::move(ip_adress)}, port_{port} 
+    explicit BaseSocket::BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port) :
+        domain_{domain}, type_{type}, protocol_{protocol}, ip_address_{std::move(ip_adress)}, port_{port}
         {}
 
-    BaseSocket::~BaseSocket()        
+    BaseSocket::~BaseSocket()
     {
         Close();
     }
