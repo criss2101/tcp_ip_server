@@ -2,6 +2,8 @@
 #define SERVER_INC_TCP_IP_SERVER_H
 
 #include <string>
+#include <memory>
+#include "../../Sockets/inc/i_listening_socket.h"
 
 namespace Server
 {
@@ -34,13 +36,16 @@ namespace Server
     class TcpIpServer : public Interface::ITcpIpServer
     {
         public:
+        explicit TcpIpServer(Config::TcpIpServerConfig config);
+
         void LaunchServer() override;
         void ShutdownServer() override;
         bool IsRunning() const override { return is_running_; };
 
         private:
         bool is_running_{false};
-    };
+        std::unique_ptr<Sockets::Interface::IListeningSocket> listening_socket_;
+     };
 
 } // namespace Server
 
