@@ -5,7 +5,7 @@
 
 namespace Sockets
 {
-    class ListeningSocket : public Sockets::BaseSocket
+    class ListeningSocket : public BaseSocket
     {
         private:
         int EstablishConnection() override;

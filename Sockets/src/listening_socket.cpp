@@ -1,9 +1,9 @@
 #include "listening_socket.h"
-#include <iostream>
 
 namespace Sockets
 {
-    void ListeningSocket::print()
+    int ListeningSocket::EstablishConnection()
     {
+        return bind(socket_fd_, reinterpret_cast<const sockaddr*>(&address_), sizeof(address_));
     }
 }
