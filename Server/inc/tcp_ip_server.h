@@ -11,12 +11,12 @@ namespace Server
     {
         struct TcpIpServerConfig
         {
-            const int socket_domain;
-            const int socket_type;
-            const int socket_protocol;
-            std::string ip_adress;
-            const uint16_t socket_port;
-            const int max_connections_;
+            int socket_domain{};
+            int socket_type{};
+            int socket_protocol{};
+            std::string ip_adress{};
+            uint16_t socket_port{};
+            int max_connections{};
         };
     } // namespace Config
 
