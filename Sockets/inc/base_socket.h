@@ -10,18 +10,21 @@ namespace Sockets
     class BaseSocket
     {
         public:
-        explicit BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port) : 
-        domain_{domain}, type_{type}, protocol_{protocol}, ip_address_{std::move(ip_adress)}, port_{port} {}
+        explicit BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port);
+        virtual ~BaseSocket();
 
         protected:
-        void Init();
         virtual int EstablishConnection() = 0;
+        void ExitWithError(const char* message);
 
+        void Init();
+        void Close();
+    
         sockaddr_in address_;
-        int socket_fd_;
+        int socket_fd_{-1};
+        bool is_open{false};
 
         private:
-        // TODO: Analyse what can be removed from members
         const int domain_;
         const int type_;
         const int protocol_;
