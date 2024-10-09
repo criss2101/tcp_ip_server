@@ -4,12 +4,26 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <csignal>
+
+int socket_fd = -1;
+
+void signalHandler(int signal)
+{
+    if (signal == SIGINT)
+    {
+        std::cout << "Closing connection. \n";
+        close(socket_fd);
+        exit(0);
+    }
+}
 
 int main()
 {
+    std::signal(SIGINT, signalHandler);
+
     while(true)
     {
-        int socket_fd;
         sockaddr_in server;
 
         socket_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -55,9 +69,8 @@ int main()
         send(socket_fd, reinterpret_cast<const char*>(&data), sizeof(data), 0);
 
         std::cout << "Closing packet uint32_t (0) has been sent." << std::endl;
-
-        close(socket_fd);
     }
 
+    close(socket_fd);
     return 0;
 }
