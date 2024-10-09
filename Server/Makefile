@@ -5,8 +5,8 @@ CXXFLAGS = -Wall -std=c++17 -I./inc
 LIB_FULL_NAME = lib/libserver.a
 SRC_DIR = src
 OBJ_DIR = obj
-SRCS = $(SRC_DIR)/tcp_ip_server.h
-OBJS = $(OBJ_DIR)/tcp_ip_server.o
+SRCS = $(SRC_DIR)/tcp_ip_server.cpp $(SRC_DIR)/command_processor.cpp
+OBJS = $(OBJ_DIR)/tcp_ip_server.o $(OBJ_DIR)/command_processor.o
 
 # Build target for the static library
 all: $(LIB_FULL_NAME)
