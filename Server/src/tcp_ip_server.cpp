@@ -137,9 +137,9 @@ namespace Server
         std::cout<<"New data received from client_fd: "<< client_fd << "\n";
 
         // Header data reading - should be extracted to some Reader class, to make it possible to unit test
-        constexpr int header_size{sizeof(uint32_t) * 2};
+        constexpr int header_size{sizeof(int32_t) * 2};
         std::array<std::byte, header_size> header_buf{};
-        size_t total_bytes_received = 0;
+        int total_bytes_received = 0;
 
         while (total_bytes_received < header_size && is_running_)
         {
@@ -167,8 +167,9 @@ namespace Server
             std::cout << "Header total_bytes_received: " << total_bytes_received << " < " << header_size << "\n";
         }
 
-        const u_int32_t command_id = *(reinterpret_cast<u_int32_t*>(header_buf.data()));
-        const u_int32_t payload_size = *(reinterpret_cast<u_int32_t*>(header_buf.data() + sizeof(u_int32_t)));
+        constexpr size_t header_data_offset{sizeof(int32_t)};
+        const int32_t command_id = *(reinterpret_cast<int32_t*>(header_buf.data()));
+        const int32_t payload_size = *(reinterpret_cast<int32_t*>(header_buf.data() + header_data_offset));
         std::cout << "Received Command ID: " << command_id << ", Payload Size: " << payload_size << std::endl;
         // end Header data reading
 
@@ -212,7 +213,7 @@ namespace Server
         }
 
         // Ending mark reading - should be extracted to some Reader class, to make it possible to unit test
-        constexpr int ending_mark_size{sizeof(uint32_t)};
+        constexpr int ending_mark_size{sizeof(int32_t)};
         std::array<std::byte, ending_mark_size> ending_mark_buf{};
         total_bytes_received = 0;
 
