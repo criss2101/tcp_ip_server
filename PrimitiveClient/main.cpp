@@ -45,30 +45,43 @@ int main()
             return 1;
         }
 
-
-        uint32_t data;
-        std::string text;
-
+        int32_t command_id;
         std::cout << "Enter command number:";
-        std::cin >> data;
-        send(socket_fd, reinterpret_cast<const char*>(&data), sizeof(data), 0);
+        std::cin >> command_id;
+        send(socket_fd, reinterpret_cast<const char*>(&command_id), sizeof(command_id), 0);
 
+        int32_t payload_size;
         std::cout << "Enter payload size: ";
-        std::cin >> data;
-        send(socket_fd, reinterpret_cast<const char*>(&data), sizeof(data), 0);
+        std::cin >> payload_size;
+        send(socket_fd, reinterpret_cast<const char*>(&payload_size), sizeof(payload_size), 0);
 
-        std::cout << "Enter string data: ";
-        std::cin.ignore();
-        std::getline(std::cin, text);
-        std::cout << "text.size(): " << text.size() << std::endl;
-        send(socket_fd, text.c_str(), text.size(), 0);
+        if(command_id == 1)
+        {
+            std::string str;
+            std::cout << "Enter payload data [string]: ";
+            std::cin.ignore();
+            std::getline(std::cin, str);
+            size_t length = payload_size;
+            int8_t* byte_array = new int8_t[length + 1];
+            std::memcpy(byte_array, str.data(), length);
+            byte_array[length] = '\0';
+            send(socket_fd, byte_array, length + 1, 0);
+            delete[] byte_array;
+        }
+        else if(command_id == 2)
+        {
+            int32_t number;
+            std::cout << "Enter payload data [number]: ";
+            std::cin >> number;
+            send(socket_fd, reinterpret_cast<const char*>(&number), sizeof(number), 0);
+        }
 
-        std::cout << "Click any button to send uint32_t (0).\n";
-        std::cin.ignore();
-        data = 0;
-        send(socket_fd, reinterpret_cast<const char*>(&data), sizeof(data), 0);
+        int32_t ending_mark;
+        std::cout << "Provide 0 to send ending mark: \n";
+        std::cin >> ending_mark;
+        send(socket_fd, reinterpret_cast<const char*>(&ending_mark), sizeof(ending_mark), 0);
 
-        std::cout << "Closing packet uint32_t (0) has been sent." << std::endl;
+        std::cout << "Closing packet int32_t (0) has been sent." << std::endl;
     }
 
     close(socket_fd);
