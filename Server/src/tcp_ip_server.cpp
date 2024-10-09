@@ -5,6 +5,8 @@
 #include <vector>
 #include <cstddef>
 #include <thread>
+#include <variant>
+#include <csignal>
 #include "../inc/tcp_ip_server.h"
 #include "../../Sockets/inc/listening_socket.h"
 
@@ -22,11 +24,32 @@ namespace Server
             }
             return false;
         }
+
+        void HandleResult(const Processing::Interface::CommandResult& result)
+        {
+            std::visit([](auto&& arg)
+            {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<T, double>)
+                {
+                    std::cout << "OK: " << arg << std::endl;
+                }
+                else if constexpr (std::is_same_v<T, std::string>)
+                {
+                    std::cout << "OK: " << arg << std::endl;
+                }
+                else
+                {
+                    std::cout << "ERROR\n";
+                }
+            }, result);
+        }
     }
 
     TcpIpServer::TcpIpServer(const Config::TcpIpServerConfig config)
     {
         listening_socket_ = std::make_unique<Sockets::ListeningSocket>(config.socket_domain, config.socket_type, config.socket_protocol, config.ip_adress, config.socket_port, config.max_connections);
+        command_processor_ = std::make_unique<Processing::CommandProcessor>();
     }
 
     TcpIpServer::~TcpIpServer()
@@ -46,6 +69,7 @@ namespace Server
 
     void TcpIpServer::ShutdownServer()
     {
+        std::cout<<"Server turning off. \n";
         listening_socket_->Close();
         is_running_ = false;
     }
@@ -138,13 +162,13 @@ namespace Server
 
         // Header data reading - should be extracted to some Reader class, to make it possible to unit test
         constexpr int header_size{sizeof(int32_t) * 2};
-        std::array<std::byte, header_size> header_buf{};
+        std::array<int8_t, header_size> header_buf{};
         int total_bytes_received = 0;
 
         while (total_bytes_received < header_size && is_running_)
         {
-            const ssize_t bytesRead = read(client_fd, header_buf.data() + total_bytes_received, header_size - total_bytes_received);
-            if (bytesRead <= 0)
+            const ssize_t bytes_read = read(client_fd, header_buf.data() + total_bytes_received, header_size - total_bytes_received);
+            if (bytes_read <= 0)
             {
                 std::cerr << "ERROR\n";
                 perror("Header data reading - Error reading from client or connection closed. Disconnecting client.");
@@ -152,7 +176,7 @@ namespace Server
                 RemoveSocketFdFromMap(client_fd);
                 return;
             }
-            total_bytes_received += bytesRead;
+            total_bytes_received += bytes_read;
 
             const auto currentTime = std::chrono::steady_clock::now();
             if(TimeoutReached(currentTime, start_time, timeout_sec_))
@@ -174,21 +198,21 @@ namespace Server
         // end Header data reading
 
         // Payload data reading - should be extracted to some reader class, to make it possible to unit test
-        std::vector<std::byte> payload(payload_size);
+        std::vector<int8_t> payload(payload_size);
         total_bytes_received = 0;
         if (payload_size > 0)
         {
             while (total_bytes_received < payload_size && is_running_)
             {
-                ssize_t bytesRead = read(client_fd, payload.data() + total_bytes_received, payload_size - total_bytes_received);
-                if (bytesRead <= 0)
+                ssize_t bytes_read = read(client_fd, payload.data() + total_bytes_received, payload_size - total_bytes_received);
+                if (bytes_read <= 0)
                 {
                     perror("Payload data reading - Error reading payload from client or connection closed. Disconnecting client.");
                     close(client_fd);
                     RemoveSocketFdFromMap(client_fd);
                     return;
                 }
-                total_bytes_received += bytesRead;
+                total_bytes_received += bytes_read;
 
                 const auto currentTime = std::chrono::steady_clock::now();
                 if(TimeoutReached(currentTime, start_time, timeout_sec_))
@@ -214,13 +238,13 @@ namespace Server
 
         // Ending mark reading - should be extracted to some Reader class, to make it possible to unit test
         constexpr int ending_mark_size{sizeof(int32_t)};
-        std::array<std::byte, ending_mark_size> ending_mark_buf{};
+        std::array<int8_t, ending_mark_size> ending_mark_buf{};
         total_bytes_received = 0;
 
         while (total_bytes_received < ending_mark_size && is_running_)
         {
-            ssize_t bytesRead = read(client_fd, ending_mark_buf.data(), ending_mark_size - total_bytes_received);
-            if (bytesRead <= 0)
+            ssize_t bytes_read = read(client_fd, ending_mark_buf.data(), ending_mark_size - total_bytes_received);
+            if (bytes_read <= 0)
             {
                 std::cerr << "ERROR\n";
                 std::cerr << "Ending mark reading - 0 bytes received. Check whether payload size and actual payload data are correct.  Disconnecting client.\n";
@@ -228,7 +252,7 @@ namespace Server
                 RemoveSocketFdFromMap(client_fd);
                 return;
             }
-            total_bytes_received += bytesRead;
+            total_bytes_received += bytes_read;
 
             const auto currentTime = std::chrono::steady_clock::now();
             if(TimeoutReached(currentTime, start_time, timeout_sec_))
@@ -241,6 +265,27 @@ namespace Server
             }
         }
         // end Ending mark reading
+
+        if(*reinterpret_cast<int32_t*>(ending_mark_buf.data()) != 0)
+        {
+            std::cerr << "ERROR\n";
+            std::cerr << "Ending mark incorrect. Disconnecting client.\n";
+            close(client_fd);
+            RemoveSocketFdFromMap(client_fd);
+        }
+
+        std::cout<<"Data received, data processing start...\n";
+        // Data Processing
+        const auto result = command_processor_->ProcessCommand(static_cast<Processing::Interface::CommandID>(command_id), payload);
+
+        try
+        {
+            HandleResult(result);
+        }
+        catch(const std::out_of_range& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
 
         close(client_fd);
         RemoveSocketFdFromMap(client_fd);

@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <atomic>
 #include "../../Sockets/inc/i_listening_socket.h"
+#include "command_processor.h"
 
 namespace Server
 {
@@ -58,6 +59,8 @@ namespace Server
 
         std::unordered_map<int, bool> client_fd_to_processing_state_map_;
         std::mutex map_access_mutex_;
+
+        std::unique_ptr<Server::Processing::Interface::ICommandProcessor> command_processor_;
      };
 
 } // namespace Server
