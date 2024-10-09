@@ -3,6 +3,9 @@
 
 #include <string>
 #include <memory>
+#include <mutex>
+#include <unordered_map>
+#include <atomic>
 #include "../../Sockets/inc/i_listening_socket.h"
 
 namespace Server
@@ -45,12 +48,16 @@ namespace Server
 
         private:
         void HandleClientData(int client_fd);
+        void RemoveSocketFdFromMap(const int socket_fd);
         void Work();
 
-        bool is_running_{false};
+        std::atomic<bool> is_running_{false};
         std::unique_ptr<Sockets::Interface::IListeningSocket> listening_socket_;
         const int max_events_{10};
-        const int timeout_sec_{30};
+        const int timeout_sec_{60};
+
+        std::unordered_map<int, bool> client_fd_to_processing_state_map_;
+        std::mutex map_access_mutex_;
      };
 
 } // namespace Server

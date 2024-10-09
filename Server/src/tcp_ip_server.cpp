@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <cstddef>
+#include <thread>
 #include "../inc/tcp_ip_server.h"
 #include "../../Sockets/inc/listening_socket.h"
 
@@ -53,7 +54,7 @@ namespace Server
     {
         // Creation of epoll might be wrapped into some external module
         epoll_event event, events[max_events_];
-        const auto& socket_fd = listening_socket_->GetSocketFd();
+        const auto& server_socket_fd = listening_socket_->GetSocketFd();
 
         // Create epoll instance
         auto epollFd = epoll_create1(0);
@@ -65,8 +66,8 @@ namespace Server
 
         // Add server socket to epoll
         event.events = EPOLLIN;
-        event.data.fd = socket_fd;
-        if (epoll_ctl(epollFd, EPOLL_CTL_ADD, socket_fd, &event) == -1)
+        event.data.fd = server_socket_fd;
+        if (epoll_ctl(epollFd, EPOLL_CTL_ADD, server_socket_fd, &event) == -1)
         {
             perror("epoll_ctl failure");
             exit(EXIT_FAILURE);
@@ -82,12 +83,12 @@ namespace Server
 
             for (int i = 0; i < numEvents; ++i)
             {
-                if (events[i].data.fd == socket_fd)
+                if (events[i].data.fd == server_socket_fd)
                 {
-                    sockaddr_in clientAddress;
-                    socklen_t clientAddressLength = sizeof(clientAddress);
-                    int clientFd = accept(socket_fd, (sockaddr*)&clientAddress, &clientAddressLength);
-                    if (clientFd == -1)
+                    sockaddr_in client_address;
+                    socklen_t client_address_length = sizeof(client_address);
+                    int new_client_fd = accept(server_socket_fd, (sockaddr*)&client_address, &client_address_length);
+                    if (new_client_fd == -1)
                     {
                         perror("Failed to wait for events.");
                         continue;
@@ -96,23 +97,41 @@ namespace Server
 
                     // Add client socket to epoll
                     event.events = EPOLLIN;
-                    event.data.fd = clientFd;
-                    if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &event) == -1)
+                    event.data.fd = new_client_fd;
+                    if (epoll_ctl(epollFd, EPOLL_CTL_ADD, new_client_fd, &event) == -1)
                     {
                         perror("Failed to add client socket to epoll instance.");
-                        close(clientFd);
+                        close(new_client_fd);
                         continue;
+                    }
+
+                    {
+                        std::lock_guard<std::mutex> lock(map_access_mutex_);
+                        client_fd_to_processing_state_map_.insert({new_client_fd, false});
                     }
                 }
                 else
                 {
-                    HandleClientData(events[i].data.fd);
+                    auto client_fd = static_cast<int>(events[i].data.fd);
+
+                    {
+                        std::lock_guard<std::mutex> lock(map_access_mutex_);
+                        auto it = client_fd_to_processing_state_map_.find(client_fd);
+                        if ((it != client_fd_to_processing_state_map_.end() && it->second) || it == client_fd_to_processing_state_map_.end())
+                        {
+                            continue;
+                        }
+                        client_fd_to_processing_state_map_[client_fd] = true;
+                    }
+
+                    std::thread clientDataProcessingThread(&TcpIpServer::HandleClientData, this, client_fd);
+                    clientDataProcessingThread.detach();
                 }
             }
         }
     }
 
-    void Server::TcpIpServer::HandleClientData(int client_fd)
+    void TcpIpServer::HandleClientData(int client_fd)
     {
         auto start_time = std::chrono::steady_clock::now();
         std::cout<<"New data received from client_fd: "<< client_fd << "\n";
@@ -122,7 +141,7 @@ namespace Server
         std::array<std::byte, header_size> header_buf{};
         size_t total_bytes_received = 0;
 
-        while (total_bytes_received < header_size)
+        while (total_bytes_received < header_size && is_running_)
         {
             const ssize_t bytesRead = read(client_fd, header_buf.data() + total_bytes_received, header_size - total_bytes_received);
             if (bytesRead <= 0)
@@ -130,6 +149,7 @@ namespace Server
                 std::cerr << "ERROR\n";
                 perror("Header data reading - Error reading from client or connection closed. Disconnecting client.");
                 close(client_fd);
+                RemoveSocketFdFromMap(client_fd);
                 return;
             }
             total_bytes_received += bytesRead;
@@ -140,6 +160,7 @@ namespace Server
                 std::cerr << "ERROR\n";
                 std::cerr << "Header data reading - Timeout. Disconnecting client.\n";
                 close(client_fd);
+                RemoveSocketFdFromMap(client_fd);
                 return;
             }
 
@@ -156,13 +177,14 @@ namespace Server
         total_bytes_received = 0;
         if (payload_size > 0)
         {
-            while (total_bytes_received < payload_size)
+            while (total_bytes_received < payload_size && is_running_)
             {
                 ssize_t bytesRead = read(client_fd, payload.data() + total_bytes_received, payload_size - total_bytes_received);
                 if (bytesRead <= 0)
                 {
                     perror("Payload data reading - Error reading payload from client or connection closed. Disconnecting client.");
                     close(client_fd);
+                    RemoveSocketFdFromMap(client_fd);
                     return;
                 }
                 total_bytes_received += bytesRead;
@@ -173,6 +195,7 @@ namespace Server
                     std::cerr << "ERROR\n";
                     std::cerr << "Payload data reading - Timeout. Disconnecting client.\n";
                     close(client_fd);
+                    RemoveSocketFdFromMap(client_fd);
                     return;
                 }
 
@@ -184,6 +207,7 @@ namespace Server
             std::cerr << "ERROR\n";
             std::cerr << "Payload = 0, no need to process command. Disconnecting client. \n";
             close(client_fd);
+            RemoveSocketFdFromMap(client_fd);
             return;
         }
 
@@ -192,7 +216,7 @@ namespace Server
         std::array<std::byte, ending_mark_size> ending_mark_buf{};
         total_bytes_received = 0;
 
-        while (total_bytes_received < ending_mark_size)
+        while (total_bytes_received < ending_mark_size && is_running_)
         {
             ssize_t bytesRead = read(client_fd, ending_mark_buf.data(), ending_mark_size - total_bytes_received);
             if (bytesRead <= 0)
@@ -200,6 +224,7 @@ namespace Server
                 std::cerr << "ERROR\n";
                 std::cerr << "Ending mark reading - 0 bytes received. Check whether payload size and actual payload data are correct.  Disconnecting client.\n";
                 close(client_fd);
+                RemoveSocketFdFromMap(client_fd);
                 return;
             }
             total_bytes_received += bytesRead;
@@ -210,13 +235,26 @@ namespace Server
                 std::cerr << "ERROR\n";
                 std::cerr << "Ending mark reading - Timeout. Disconnecting client.\n";
                 close(client_fd);
+                RemoveSocketFdFromMap(client_fd);
                 return;
             }
         }
         // end Ending mark reading
 
-
         close(client_fd);
+        RemoveSocketFdFromMap(client_fd);
+    }
+
+    void TcpIpServer::RemoveSocketFdFromMap(const int socket_fd)
+    {
+        {
+            std::lock_guard<std::mutex> lock(map_access_mutex_);
+            auto it = client_fd_to_processing_state_map_.find(socket_fd);
+            if (it != client_fd_to_processing_state_map_.end())
+            {
+                client_fd_to_processing_state_map_.erase(it);
+            }
+        }
     }
 
 } // namespace Server
