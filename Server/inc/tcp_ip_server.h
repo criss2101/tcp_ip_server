@@ -44,11 +44,13 @@ namespace Server
         bool IsRunning() const override { return is_running_; };
 
         private:
+        void HandleClientData(int client_fd);
         void Work();
 
         bool is_running_{false};
         std::unique_ptr<Sockets::Interface::IListeningSocket> listening_socket_;
         const int max_events_{10};
+        const int timeout_sec_{30};
      };
 
 } // namespace Server
