@@ -5,6 +5,7 @@
 
 namespace Sockets
 {
+    // Just a template class, might be used as a core module for client program connection
     class ClientSocket : public BaseSocket
     {
         private:
