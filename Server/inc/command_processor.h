@@ -25,18 +25,18 @@ namespace Server
             class ICommandProcessor
             {
                 public:
-                virtual CommandResult ProcessCommand(const CommandID command_id, const std::vector<std::byte>& payload) = 0;
+                virtual CommandResult ProcessCommand(const CommandID command_id, const std::vector<int8_t>& payload) = 0;
             };
         }
 
         class CommandProcessor : public Interface::ICommandProcessor
         {
             public:
-            using CommandHandler = std::function<Interface::CommandResult(const std::vector<std::byte>&)>;
+            using CommandHandler = std::function<Interface::CommandResult(const std::vector<int8_t>&)>;
 
             CommandProcessor();
 
-            Interface::CommandResult ProcessCommand(Interface::CommandID commandID, const std::vector<std::byte>& payload) override;
+            Interface::CommandResult ProcessCommand(Interface::CommandID commandID, const std::vector<int8_t>& payload) override;
 
             private:
             void RegisterCommandHandlers();
