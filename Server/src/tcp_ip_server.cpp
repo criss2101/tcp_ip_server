@@ -7,6 +7,7 @@
 #include <thread>
 #include <variant>
 #include <csignal>
+#include <iomanip>
 #include "../inc/tcp_ip_server.h"
 #include "../../Sockets/inc/listening_socket.h"
 
@@ -32,7 +33,7 @@ namespace Server
                 using T = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<T, double>)
                 {
-                    std::cout << "OK: " << arg << std::endl;
+                    std::cout << "OK: " << std::setprecision(10) << arg << std::endl;
                 }
                 else if constexpr (std::is_same_v<T, std::string>)
                 {
@@ -47,10 +48,9 @@ namespace Server
     }
 
     TcpIpServer::TcpIpServer(const Config::TcpIpServerConfig config)
-    {
-        listening_socket_ = std::make_unique<Sockets::ListeningSocket>(config.socket_domain, config.socket_type, config.socket_protocol, config.ip_adress, config.socket_port, config.max_connections, config.socket_waking_up_timeout);
-        command_processor_ = std::make_unique<Processing::CommandProcessor>();
-    }
+    : listening_socket_{std::make_unique<Sockets::ListeningSocket>(config.socket_domain, config.socket_type, config.socket_protocol, config.ip_adress, config.socket_port, config.max_connections, config.socket_waking_up_timeout)},
+      command_processor_{std::make_unique<Processing::CommandProcessor>()}
+    { }
 
     TcpIpServer::~TcpIpServer()
     {
@@ -289,6 +289,7 @@ namespace Server
             std::cerr << "ERROR\n";
             std::cerr << "Ending mark incorrect. Disconnecting client.\n";
             OnReadError(client_fd);
+            return;
         }
 
         std::cout<<"Data received, data processing start...\n";
@@ -301,6 +302,8 @@ namespace Server
         catch(const std::out_of_range& e)
         {
             std::cerr << e.what() << '\n';
+            OnReadError(client_fd);
+            return;
         }
 
         close(client_fd);

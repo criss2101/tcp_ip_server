@@ -44,7 +44,7 @@ int main()
     }
 
     int32_t command_id;
-    std::cout << "Enter command number:";
+    std::cout << "Enter command number: ";
     std::cin >> command_id;
     send(socket_fd, reinterpret_cast<const char*>(&command_id), sizeof(command_id), 0);
 
@@ -59,11 +59,11 @@ int main()
         std::cout << "Enter payload data [string]: ";
         std::cin.ignore();
         std::getline(std::cin, str);
-        size_t length = payload_size;
-        int8_t* byte_array = new int8_t[length + 1];
+        size_t length = str.size();
+        int8_t* byte_array = new int8_t[length];
         std::memcpy(byte_array, str.data(), length);
         byte_array[length] = '\0';
-        send(socket_fd, byte_array, length + 1, 0);
+        send(socket_fd, byte_array, length, 0);
         delete[] byte_array;
     }
     else if(command_id == 2)
