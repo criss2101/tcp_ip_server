@@ -41,6 +41,12 @@ namespace Server
     {
         public:
         explicit TcpIpServer(Config::TcpIpServerConfig config);
+
+        TcpIpServer(const TcpIpServer&) = delete;
+        TcpIpServer& operator=(const TcpIpServer&) = delete;
+        TcpIpServer(TcpIpServer&&) = delete;
+        TcpIpServer& operator=(TcpIpServer&&) = delete;
+
         ~TcpIpServer();
 
         void LaunchServer() override;

@@ -11,6 +11,12 @@ namespace Sockets
     {
         public:
         explicit BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port);
+
+        BaseSocket(const BaseSocket&) = delete;
+        BaseSocket& operator=(const BaseSocket&) = delete;
+        BaseSocket(BaseSocket&&) = delete;
+        BaseSocket& operator=(BaseSocket&&) = delete;
+        
         virtual ~BaseSocket();
 
         protected:

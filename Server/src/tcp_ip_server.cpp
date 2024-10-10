@@ -119,7 +119,7 @@ namespace Server
                         perror("Failed to wait for events.");
                         continue;
                     }
-                    std::cout<<"\n\nNew connection accepted. \n";
+                    std::cout<<"\n\nNew connection accepted. Client_fd: " << new_client_fd << std::endl;
 
                     // Add client socket to epoll
                     event.events = EPOLLIN;
@@ -151,7 +151,6 @@ namespace Server
             auto it = client_fd_to_processing_state_map_.find(client_fd);
             if ((it != client_fd_to_processing_state_map_.end() && it->second) || it == client_fd_to_processing_state_map_.end())
             {
-                std::cout<<"Client_fd: "<< client_fd << "isn't connected or its data is being processed \n";
                 return;
             }
             client_fd_to_processing_state_map_[client_fd] = true;
@@ -170,6 +169,7 @@ namespace Server
     void TcpIpServer::HandleClientData(int client_fd)
     {
         auto start_time = std::chrono::steady_clock::now();
+        auto current_time = std::chrono::steady_clock::now();
         std::cout<<"New data received from client_fd: "<< client_fd << "\n";
 
         // Header data reading - should be extracted to some Reader class, to make it possible to unit test
@@ -180,7 +180,7 @@ namespace Server
         while (total_bytes_received < header_size && is_running_)
         {
             const ssize_t bytes_read = read(client_fd, header_buf.data() + total_bytes_received, header_size - total_bytes_received);
-            if (bytes_read <= 0 || errno == EAGAIN)
+            if (bytes_read <= 0 && errno != EAGAIN)
             {
                 std::cerr << "ERROR\n";
                 perror("Header data reading - Error reading from client or connection closed. Disconnecting client.");
@@ -189,8 +189,8 @@ namespace Server
             }
             total_bytes_received += bytes_read;
 
-            const auto currentTime = std::chrono::steady_clock::now();
-            if(TimeoutReached(currentTime, start_time, timeout_sec_))
+            current_time = std::chrono::steady_clock::now();
+            if(TimeoutReached(current_time, start_time, timeout_sec_))
             {
                 std::cerr << "ERROR\n";
                 std::cerr << "Header data reading - Timeout. Disconnecting client.\n";
@@ -198,13 +198,13 @@ namespace Server
                 return;
             }
 
-            std::cout << "Header total_bytes_received: " << total_bytes_received << " < " << header_size << "\n";
+            std::cout << "Client_fd: " << client_fd << " - header total_bytes_received: " << total_bytes_received << " < " << header_size << "\n";
         }
 
         constexpr size_t header_data_offset{sizeof(int32_t)};
         const int32_t command_id = *(reinterpret_cast<int32_t*>(header_buf.data()));
         const int32_t payload_size = *(reinterpret_cast<int32_t*>(header_buf.data() + header_data_offset));
-        std::cout << "Received Command ID: " << command_id << ", Payload Size: " << payload_size << std::endl;
+        std::cout << "Client_fd: " << client_fd << " - received Command ID: " << command_id << ", Payload Size: " << payload_size << std::endl;
         // end Header data reading
 
         // Payload data reading - should be extracted to some reader class, to make it possible to unit test
@@ -215,7 +215,7 @@ namespace Server
             while (total_bytes_received < payload_size && is_running_)
             {
                 ssize_t bytes_read = read(client_fd, payload.data() + total_bytes_received, payload_size - total_bytes_received);
-                if (bytes_read <= 0 || errno == EAGAIN)
+                if (bytes_read <= 0 && errno != EAGAIN)
                 {
                     perror("Payload data reading - Error reading payload from client or connection closed. Disconnecting client.");
                     OnReadError(client_fd);
@@ -223,8 +223,8 @@ namespace Server
                 }
                 total_bytes_received += bytes_read;
 
-                const auto currentTime = std::chrono::steady_clock::now();
-                if(TimeoutReached(currentTime, start_time, timeout_sec_))
+                current_time = std::chrono::steady_clock::now();
+                if(TimeoutReached(current_time, start_time, timeout_sec_))
                 {
                     std::cerr << "ERROR\n";
                     std::cerr << "Payload data reading - Timeout. Disconnecting client.\n";
@@ -232,7 +232,7 @@ namespace Server
                     return;
                 }
 
-                std::cout << "Payload total_bytes_received: " << total_bytes_received << " < " << payload_size << "\n";
+                std::cout << "Client_fd: " << client_fd << " - payload total_bytes_received: " << total_bytes_received << " < " << payload_size << "\n";
             }
         }
         else
@@ -251,7 +251,7 @@ namespace Server
         while (total_bytes_received < ending_mark_size && is_running_)
         {
             ssize_t bytes_read = read(client_fd, ending_mark_buf.data(), ending_mark_size - total_bytes_received);
-            if (bytes_read <= 0 || errno == EAGAIN)
+            if (bytes_read <= 0 && errno != EAGAIN)
             {
                 std::cerr << "ERROR\n";
                 std::cerr << "Ending mark reading - 0 bytes received. Check whether payload size and actual payload data are correct.  Disconnecting client.\n";
@@ -260,14 +260,16 @@ namespace Server
             }
             total_bytes_received += bytes_read;
 
-            const auto currentTime = std::chrono::steady_clock::now();
-            if(TimeoutReached(currentTime, start_time, timeout_sec_))
+            current_time = std::chrono::steady_clock::now();
+            if(TimeoutReached(current_time, start_time, timeout_sec_))
             {
                 std::cerr << "ERROR\n";
                 std::cerr << "Ending mark reading - Timeout. Disconnecting client.\n";
                 OnReadError(client_fd);
                 return;
             }
+
+            std::cout << "Client_fd: " << client_fd << " - ending mark total_bytes_received: " << total_bytes_received << " < " << ending_mark_size << "\n";
         }
         // end Ending mark reading
 

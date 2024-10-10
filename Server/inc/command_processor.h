@@ -25,6 +25,8 @@ namespace Server
             class ICommandProcessor
             {
                 public:
+                virtual ~ICommandProcessor() = default;
+
                 virtual CommandResult ProcessCommand(const CommandID command_id, const std::vector<int8_t>& payload) = 0;
             };
         }
