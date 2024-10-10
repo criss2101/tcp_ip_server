@@ -48,7 +48,7 @@ namespace Server
 
     TcpIpServer::TcpIpServer(const Config::TcpIpServerConfig config)
     {
-        listening_socket_ = std::make_unique<Sockets::ListeningSocket>(config.socket_domain, config.socket_type, config.socket_protocol, config.ip_adress, config.socket_port, config.max_connections);
+        listening_socket_ = std::make_unique<Sockets::ListeningSocket>(config.socket_domain, config.socket_type, config.socket_protocol, config.ip_adress, config.socket_port, config.max_connections, config.socket_waking_up_timeout);
         command_processor_ = std::make_unique<Processing::CommandProcessor>();
     }
 
@@ -187,7 +187,10 @@ namespace Server
                 OnReadError(client_fd);
                 return;
             }
-            total_bytes_received += bytes_read;
+            if(bytes_read > 0)
+            {
+                total_bytes_received += bytes_read;
+            }
 
             current_time = std::chrono::steady_clock::now();
             if(TimeoutReached(current_time, start_time, timeout_sec_))
@@ -221,7 +224,11 @@ namespace Server
                     OnReadError(client_fd);
                     return;
                 }
-                total_bytes_received += bytes_read;
+
+                if(bytes_read > 0)
+                {
+                    total_bytes_received += bytes_read;
+                }
 
                 current_time = std::chrono::steady_clock::now();
                 if(TimeoutReached(current_time, start_time, timeout_sec_))
@@ -258,7 +265,11 @@ namespace Server
                 OnReadError(client_fd);
                 return;
             }
-            total_bytes_received += bytes_read;
+
+            if(bytes_read > 0)
+            {
+                total_bytes_received += bytes_read;
+            }
 
             current_time = std::chrono::steady_clock::now();
             if(TimeoutReached(current_time, start_time, timeout_sec_))

@@ -18,6 +18,7 @@ namespace Server
             int socket_domain{};
             int socket_type{};
             int socket_protocol{};
+            int socket_waking_up_timeout{};
             std::string ip_adress{};
             uint16_t socket_port{};
             int max_connections{};
@@ -63,7 +64,7 @@ namespace Server
         std::atomic<bool> is_running_{false};
         std::unique_ptr<Sockets::Interface::IListeningSocket> listening_socket_;
         const int max_events_{10};
-        const int timeout_sec_{60};
+        const int timeout_sec_{20};
 
         std::unordered_map<int, bool> client_fd_to_processing_state_map_;
         std::mutex map_access_mutex_;

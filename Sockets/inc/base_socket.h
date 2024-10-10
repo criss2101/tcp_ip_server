@@ -10,13 +10,13 @@ namespace Sockets
     class BaseSocket
     {
         public:
-        explicit BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port);
+        explicit BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port, const int waking_up_timeout);
 
         BaseSocket(const BaseSocket&) = delete;
         BaseSocket& operator=(const BaseSocket&) = delete;
         BaseSocket(BaseSocket&&) = delete;
         BaseSocket& operator=(BaseSocket&&) = delete;
-        
+
         virtual ~BaseSocket();
 
         protected:
@@ -31,11 +31,14 @@ namespace Sockets
         bool is_open{false};
 
         private:
+        void SetSocketTimeout(const int seconds);
+
         const int domain_;
         const int type_;
         const int protocol_;
         const std::string ip_address_;
         const uint16_t port_;
+        const int waking_up_timeout_;
     };
 } // namespace Sockets
 

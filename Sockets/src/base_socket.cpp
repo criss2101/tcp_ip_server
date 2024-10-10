@@ -5,13 +5,25 @@
 
 namespace Sockets
 {
-    BaseSocket::BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port) :
-        domain_{domain}, type_{type}, protocol_{protocol}, ip_address_{std::move(ip_adress)}, port_{port}
+    BaseSocket::BaseSocket(const int domain, const int type, const int protocol, std::string ip_adress, const uint16_t port, const int waking_up_timeout)
+    : domain_{domain}, type_{type}, protocol_{protocol}, ip_address_{std::move(ip_adress)}, port_{port}, waking_up_timeout_{waking_up_timeout}
         {}
 
     BaseSocket::~BaseSocket()
     {
         Close();
+    }
+
+    void BaseSocket::SetSocketTimeout(const int seconds)
+    {
+        timeval timeout;
+        timeout.tv_sec = seconds;
+        timeout.tv_usec = 0;
+
+         if (setsockopt(socket_fd_, SOL_SOCKET, SO_RCVTIMEO, reinterpret_cast<const char*>(&timeout), sizeof(timeout)) < 0)
+         {
+            perror("setsockopt(SO_RCVTIMEO) failed");
+         }
     }
 
     void BaseSocket::ExitWithError(const char *message)
@@ -33,6 +45,8 @@ namespace Sockets
         {
             ExitWithError("socket failure");
         }
+
+        SetSocketTimeout(10);
 
         if (EstablishConnection() < 0)
         {
