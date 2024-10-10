@@ -20,10 +20,26 @@ namespace Sockets
         virtual ~BaseSocket();
 
         protected:
+        /**
+         * @brief Establishes a connection.
+         * @return Returns the socket file descriptor on success, or -1 on failure.
+         */
         virtual int EstablishConnection() = 0;
+
+        /**
+         * @brief Logs an error message and terminates the process with a failure status.
+         * @param message Error message to log.
+         */
         void ExitWithError(const char* message);
 
+        /**
+         * @brief Initializes the socket.
+         */
         void Init();
+
+        /**
+         * @brief Closes the socket connection.
+         */
         void Close();
 
         sockaddr_in address_;
@@ -31,6 +47,10 @@ namespace Sockets
         bool is_open{false};
 
         private:
+        /**
+         * @brief Sets a timeout for the socket operations.
+         * @param seconds The timeout value.
+         */
         void SetSocketTimeout(const int seconds);
 
         const int domain_;
