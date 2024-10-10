@@ -6,7 +6,7 @@ LIB_FULL_NAME = lib/libsockets.a
 SRC_DIR = src
 OBJ_DIR = obj
 SRCS = $(SRC_DIR)/listening_socket.cpp $(SRC_DIR)/base_socket.cpp
-OBJS = $(OBJ_DIR)/listening_socket.o $(SRC_DIR)/base_socket.o
+OBJS = $(OBJ_DIR)/listening_socket.o $(OBJ_DIR)/base_socket.o
 
 # Build target for the static library
 all: $(LIB_FULL_NAME)
