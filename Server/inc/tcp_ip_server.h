@@ -51,6 +51,7 @@ namespace Server
         void HandleClientData(int client_fd);
         void RemoveSocketFdFromMap(const int socket_fd);
         void Work();
+        void OnClientDataReceived(const int client_fd);
 
         std::atomic<bool> is_running_{false};
         std::unique_ptr<Sockets::Interface::IListeningSocket> listening_socket_;

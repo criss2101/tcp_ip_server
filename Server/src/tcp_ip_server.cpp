@@ -97,6 +97,8 @@ namespace Server
             exit(EXIT_FAILURE);
         }
 
+        std::cout<<"Server started working... \n";
+
         while (true)
         {
             int numEvents = epoll_wait(epollFd, events, max_events_, -1);
@@ -136,23 +138,27 @@ namespace Server
                 }
                 else
                 {
-                    auto client_fd = static_cast<int>(events[i].data.fd);
-
-                    {
-                        std::lock_guard<std::mutex> lock(map_access_mutex_);
-                        auto it = client_fd_to_processing_state_map_.find(client_fd);
-                        if ((it != client_fd_to_processing_state_map_.end() && it->second) || it == client_fd_to_processing_state_map_.end())
-                        {
-                            continue;
-                        }
-                        client_fd_to_processing_state_map_[client_fd] = true;
-                    }
-
-                    std::thread clientDataProcessingThread(&TcpIpServer::HandleClientData, this, client_fd);
-                    clientDataProcessingThread.detach();
+                    OnClientDataReceived(events[i].data.fd);
                 }
             }
         }
+    }
+
+    void TcpIpServer::OnClientDataReceived(const int client_fd)
+    {
+        {
+            std::lock_guard<std::mutex> lock(map_access_mutex_);
+            auto it = client_fd_to_processing_state_map_.find(client_fd);
+            if ((it != client_fd_to_processing_state_map_.end() && it->second) || it == client_fd_to_processing_state_map_.end())
+            {
+                std::cout<<"Client_fd: "<< client_fd << "isn't connected or its data is being processed \n";
+                return;
+            }
+            client_fd_to_processing_state_map_[client_fd] = true;
+        }
+
+        std::thread clientDataProcessingThread(&TcpIpServer::HandleClientData, this, client_fd);
+        clientDataProcessingThread.detach();
     }
 
     void TcpIpServer::HandleClientData(int client_fd)
@@ -168,7 +174,7 @@ namespace Server
         while (total_bytes_received < header_size && is_running_)
         {
             const ssize_t bytes_read = read(client_fd, header_buf.data() + total_bytes_received, header_size - total_bytes_received);
-            if (bytes_read <= 0)
+            if (bytes_read <= 0 || errno == EAGAIN)
             {
                 std::cerr << "ERROR\n";
                 perror("Header data reading - Error reading from client or connection closed. Disconnecting client.");
@@ -205,7 +211,7 @@ namespace Server
             while (total_bytes_received < payload_size && is_running_)
             {
                 ssize_t bytes_read = read(client_fd, payload.data() + total_bytes_received, payload_size - total_bytes_received);
-                if (bytes_read <= 0)
+                if (bytes_read <= 0 || errno == EAGAIN)
                 {
                     perror("Payload data reading - Error reading payload from client or connection closed. Disconnecting client.");
                     close(client_fd);
@@ -244,7 +250,7 @@ namespace Server
         while (total_bytes_received < ending_mark_size && is_running_)
         {
             ssize_t bytes_read = read(client_fd, ending_mark_buf.data(), ending_mark_size - total_bytes_received);
-            if (bytes_read <= 0)
+            if (bytes_read <= 0 || errno == EAGAIN)
             {
                 std::cerr << "ERROR\n";
                 std::cerr << "Ending mark reading - 0 bytes received. Check whether payload size and actual payload data are correct.  Disconnecting client.\n";
