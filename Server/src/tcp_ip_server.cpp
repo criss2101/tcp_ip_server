@@ -81,8 +81,8 @@ namespace Server
         const auto& server_socket_fd = listening_socket_->GetSocketFd();
 
         // Create epoll instance
-        auto epollFd = epoll_create1(0);
-        if (epollFd == -1)
+        auto epoll_fd = epoll_create1(0);
+        if (epoll_fd == -1)
         {
             perror("epoll_create1 failure");
             exit(EXIT_FAILURE);
@@ -91,7 +91,7 @@ namespace Server
         // Add server socket to epoll
         event.events = EPOLLIN;
         event.data.fd = server_socket_fd;
-        if (epoll_ctl(epollFd, EPOLL_CTL_ADD, server_socket_fd, &event) == -1)
+        if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_socket_fd, &event) == -1)
         {
             perror("epoll_ctl failure");
             exit(EXIT_FAILURE);
@@ -101,7 +101,7 @@ namespace Server
 
         while (true)
         {
-            int numEvents = epoll_wait(epollFd, events, max_events_, -1);
+            int numEvents = epoll_wait(epoll_fd, events, max_events_, -1);
             if (numEvents == -1) {
                 perror("Failed to wait for events.");
                 break;
@@ -124,7 +124,7 @@ namespace Server
                     // Add client socket to epoll
                     event.events = EPOLLIN;
                     event.data.fd = new_client_fd;
-                    if (epoll_ctl(epollFd, EPOLL_CTL_ADD, new_client_fd, &event) == -1)
+                    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, new_client_fd, &event) == -1)
                     {
                         perror("Failed to add client socket to epoll instance.");
                         close(new_client_fd);
