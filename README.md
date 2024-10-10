@@ -7,7 +7,7 @@ This project implements a simple TCP/IP server and a testing client for sending 
 The server listens for incoming connections from clients and processes the received payload based on the received command id.
 The payload is checked for payload correctness. It cannot read more payload than it was specified. Check [Payload Structure](#payload-structure).
 The server processes client data on separate threads. Max number of connections = 10.
-The client connects to the server and sends commands.
+The client connects to the server and sends commands. Both the client and the server supports SIGINT (ctrl+c) handling.
 
 ## Payload Structure
 

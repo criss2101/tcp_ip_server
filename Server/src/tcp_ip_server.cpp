@@ -47,8 +47,9 @@ namespace Server
         }
     }
 
-    TcpIpServer::TcpIpServer(const Config::TcpIpServerConfig config)
-    : listening_socket_{std::make_unique<Sockets::ListeningSocket>(config.socket_domain, config.socket_type, config.socket_protocol, config.ip_adress, config.socket_port, config.max_connections, config.socket_waking_up_timeout)},
+    TcpIpServer::TcpIpServer(const Config::TcpIpServerConfig config, std::atomic<bool>& is_sigint_occured)
+    : is_sigint_occured{is_sigint_occured},
+      listening_socket_{std::make_unique<Sockets::ListeningSocket>(config.socket_domain, config.socket_type, config.socket_protocol, config.ip_adress, config.socket_port, config.max_connections, config.socket_waking_up_timeout)},
       command_processor_{std::make_unique<Processing::CommandProcessor>()}
     { }
 
@@ -99,7 +100,7 @@ namespace Server
 
         std::cout<<"Server started working... \n";
 
-        while (true)
+        while (IsRunning())
         {
             int numEvents = epoll_wait(epoll_fd, events, max_events_, -1);
             if (numEvents == -1) {
@@ -177,7 +178,7 @@ namespace Server
         std::array<int8_t, header_size> header_buf{};
         int total_bytes_received = 0;
 
-        while (total_bytes_received < header_size && is_running_)
+        while (total_bytes_received < header_size && IsRunning())
         {
             const ssize_t bytes_read = read(client_fd, header_buf.data() + total_bytes_received, header_size - total_bytes_received);
             if (bytes_read <= 0 && errno != EAGAIN)
@@ -223,7 +224,7 @@ namespace Server
         total_bytes_received = 0;
         if (payload_size > 0)
         {
-            while (total_bytes_received < payload_size && is_running_)
+            while (total_bytes_received < payload_size && IsRunning())
             {
                 ssize_t bytes_read = read(client_fd, payload.data() + total_bytes_received, payload_size - total_bytes_received);
                 if (bytes_read <= 0 && errno != EAGAIN)
@@ -263,7 +264,7 @@ namespace Server
         std::array<int8_t, ending_mark_size> ending_mark_buf{};
         total_bytes_received = 0;
 
-        while (total_bytes_received < ending_mark_size && is_running_)
+        while (total_bytes_received < ending_mark_size && IsRunning())
         {
             ssize_t bytes_read = read(client_fd, ending_mark_buf.data(), ending_mark_size - total_bytes_received);
             if (bytes_read <= 0 && errno != EAGAIN)

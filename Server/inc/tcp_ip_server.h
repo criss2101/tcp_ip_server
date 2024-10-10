@@ -56,7 +56,7 @@ namespace Server
     {
         public:
 
-        explicit TcpIpServer(Config::TcpIpServerConfig config);
+        explicit TcpIpServer(Config::TcpIpServerConfig config, std::atomic<bool>& is_sigint_occured);
 
         TcpIpServer(const TcpIpServer&) = delete;
         TcpIpServer& operator=(const TcpIpServer&) = delete;
@@ -67,7 +67,7 @@ namespace Server
 
         void LaunchServer() override;
         void ShutdownServer() override;
-        bool IsRunning() const override { return is_running_; }
+        bool IsRunning() const override { return is_running_ && !is_sigint_occured; }
 
         private:
         /**
@@ -108,6 +108,7 @@ namespace Server
         void OnReadError(const int client_fd);
 
         std::atomic<bool> is_running_{false};
+        std::atomic<bool>& is_sigint_occured;
         std::unique_ptr<Sockets::Interface::IListeningSocket> listening_socket_;
         const int max_events_{10};
         const int timeout_sec_{20};
