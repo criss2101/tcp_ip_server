@@ -161,6 +161,12 @@ namespace Server
         clientDataProcessingThread.detach();
     }
 
+    void TcpIpServer::OnReadError(const int client_fd)
+    {
+        close(client_fd);
+        RemoveSocketFdFromMap(client_fd);
+    }
+
     void TcpIpServer::HandleClientData(int client_fd)
     {
         auto start_time = std::chrono::steady_clock::now();
@@ -178,8 +184,7 @@ namespace Server
             {
                 std::cerr << "ERROR\n";
                 perror("Header data reading - Error reading from client or connection closed. Disconnecting client.");
-                close(client_fd);
-                RemoveSocketFdFromMap(client_fd);
+                OnReadError(client_fd);
                 return;
             }
             total_bytes_received += bytes_read;
@@ -189,8 +194,7 @@ namespace Server
             {
                 std::cerr << "ERROR\n";
                 std::cerr << "Header data reading - Timeout. Disconnecting client.\n";
-                close(client_fd);
-                RemoveSocketFdFromMap(client_fd);
+                OnReadError(client_fd);
                 return;
             }
 
@@ -214,8 +218,7 @@ namespace Server
                 if (bytes_read <= 0 || errno == EAGAIN)
                 {
                     perror("Payload data reading - Error reading payload from client or connection closed. Disconnecting client.");
-                    close(client_fd);
-                    RemoveSocketFdFromMap(client_fd);
+                    OnReadError(client_fd);
                     return;
                 }
                 total_bytes_received += bytes_read;
@@ -225,8 +228,7 @@ namespace Server
                 {
                     std::cerr << "ERROR\n";
                     std::cerr << "Payload data reading - Timeout. Disconnecting client.\n";
-                    close(client_fd);
-                    RemoveSocketFdFromMap(client_fd);
+                    OnReadError(client_fd);
                     return;
                 }
 
@@ -237,8 +239,7 @@ namespace Server
         {
             std::cerr << "ERROR\n";
             std::cerr << "Payload = 0, no need to process command. Disconnecting client. \n";
-            close(client_fd);
-            RemoveSocketFdFromMap(client_fd);
+            OnReadError(client_fd);
             return;
         }
 
@@ -254,8 +255,7 @@ namespace Server
             {
                 std::cerr << "ERROR\n";
                 std::cerr << "Ending mark reading - 0 bytes received. Check whether payload size and actual payload data are correct.  Disconnecting client.\n";
-                close(client_fd);
-                RemoveSocketFdFromMap(client_fd);
+                OnReadError(client_fd);
                 return;
             }
             total_bytes_received += bytes_read;
@@ -265,8 +265,7 @@ namespace Server
             {
                 std::cerr << "ERROR\n";
                 std::cerr << "Ending mark reading - Timeout. Disconnecting client.\n";
-                close(client_fd);
-                RemoveSocketFdFromMap(client_fd);
+                OnReadError(client_fd);
                 return;
             }
         }
@@ -276,16 +275,14 @@ namespace Server
         {
             std::cerr << "ERROR\n";
             std::cerr << "Ending mark incorrect. Disconnecting client.\n";
-            close(client_fd);
-            RemoveSocketFdFromMap(client_fd);
+            OnReadError(client_fd);
         }
 
         std::cout<<"Data received, data processing start...\n";
-        // Data Processing
-        const auto result = command_processor_->ProcessCommand(static_cast<Processing::Interface::CommandID>(command_id), payload);
-
         try
         {
+            // Data Processing
+            const auto result = command_processor_->ProcessCommand(static_cast<Processing::Interface::CommandID>(command_id), payload);
             HandleResult(result);
         }
         catch(const std::out_of_range& e)
