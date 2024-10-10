@@ -32,8 +32,22 @@ namespace Server
         {
             public:
             virtual ~ITcpIpServer() = default;
+
+            /**
+             * @brief Launches the server.
+             */
             virtual void LaunchServer() = 0;
+
+            /**
+             * @brief Shuts down the server.
+             */
             virtual void ShutdownServer() = 0;
+
+            /**
+             * @brief Checks if the server is currently running.
+             *
+             * @return true if the server is running, false otherwise.
+             */
             virtual bool IsRunning() const = 0;
         };
     } // namespace Interface
@@ -41,6 +55,7 @@ namespace Server
     class TcpIpServer : public Interface::ITcpIpServer
     {
         public:
+
         explicit TcpIpServer(Config::TcpIpServerConfig config);
 
         TcpIpServer(const TcpIpServer&) = delete;
@@ -52,13 +67,44 @@ namespace Server
 
         void LaunchServer() override;
         void ShutdownServer() override;
-        bool IsRunning() const override { return is_running_; };
+        bool IsRunning() const override { return is_running_; }
 
         private:
+        /**
+         * @brief Handles the data from a specific client_fd.
+         *
+         * @param client_fd The file descriptor of the client socket.
+         */
         void HandleClientData(int client_fd);
+
+        /**
+         * @brief Removes a client's socket file descriptor from the internal tracking map.
+         * This is typically done when a client disconnects or when an error occurs.
+         *
+         * @param socket_fd The file descriptor of the client's socket.
+         */
         void RemoveSocketFdFromMap(const int socket_fd);
+
+        /**
+         * @brief Main worker function responsible for managing the server's operations.
+         */
         void Work();
+
+        /**
+         * @brief Called when epoll event occurs.
+         * It starting the reading thread.
+         *
+         * @param client_fd The file descriptor of the client socket.
+         */
         void OnClientDataReceived(const int client_fd);
+
+        /**
+         * @brief Handles errors that occur during reading data from a client.
+         * Cleans opened connections.
+         * This could be triggered by socket errors or unexpected conditions.
+         *
+         * @param client_fd The file descriptor of the client socket.
+         */
         void OnReadError(const int client_fd);
 
         std::atomic<bool> is_running_{false};
@@ -75,3 +121,4 @@ namespace Server
 } // namespace Server
 
 #endif // SERVER_INC_TCP_IP_SERVER_H
+
