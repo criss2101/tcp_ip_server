@@ -2,8 +2,8 @@
 CXX = g++
 CXXFLAGS = -Wall -std=c++17 -I./Server
 
-LIB_SERVER = libA/libserver.a
-LIB_SOCKETS = libB/libB.a
+LIB_SERVER = Server/lib/libserver.a
+LIB_SOCKETS = Sockets/lib/libsockets.a
 TARGET = tcpip_server
 
 # Build all targets
