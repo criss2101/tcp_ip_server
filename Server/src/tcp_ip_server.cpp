@@ -208,6 +208,14 @@ namespace Server
         const int32_t command_id = *(reinterpret_cast<int32_t*>(header_buf.data()));
         const int32_t payload_size = *(reinterpret_cast<int32_t*>(header_buf.data() + header_data_offset));
         std::cout << "Client_fd: " << client_fd << " - received Command ID: " << command_id << ", Payload Size: " << payload_size << std::endl;
+
+        if(!command_processor_->CommandIDSupported(static_cast<Processing::Interface::CommandID>(command_id)))
+        {
+            std::cerr << "ERROR\n";
+            std::cerr << "Header data reading - CommandID not supported. Disconnecting client.\n";
+            OnReadError(client_fd);
+            return;
+        }
         // end Header data reading
 
         // Payload data reading - should be extracted to some reader class, to make it possible to unit test

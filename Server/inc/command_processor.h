@@ -40,6 +40,14 @@ namespace Server
                  * @return CommandResult The result of processing the command, which is variant, check CommandResult.
                  */
                 virtual CommandResult ProcessCommand(const CommandID command_id, const std::vector<int8_t>& payload) = 0;
+
+                /**
+                 * @brief Checks whether CommandID is supported
+                 *
+                 * @param command_id The command id to be checked
+                 * @return True if command is supported, false otherwise
+                 */
+                virtual bool CommandIDSupported(const CommandID command_id) const = 0;
             };
         }
 
@@ -56,6 +64,8 @@ namespace Server
             CommandProcessor& operator=(CommandProcessor&&) = delete;
 
             Interface::CommandResult ProcessCommand(Interface::CommandID commandID, const std::vector<int8_t>& payload) override;
+
+            bool CommandIDSupported(const Interface::CommandID command_id) const override;
 
             private:
             /**

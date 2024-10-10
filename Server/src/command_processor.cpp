@@ -22,6 +22,21 @@ namespace Server
             }
         }
 
+        bool CommandProcessor::CommandIDSupported(const Interface::CommandID command_id) const
+        {
+            switch (command_id)
+            {
+                case Interface::CommandID::STRING_OUT:
+                    return true;
+                    break;
+                case Interface::CommandID::DOUBLE_OUT:
+                    return true;
+                    break;
+                default:
+                    return false;
+            }
+        }
+
         void CommandProcessor::RegisterCommandHandlers()
         {
             command_handlers[Interface::CommandID::STRING_OUT] = [](const std::vector<int8_t>& payload)
